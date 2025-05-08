@@ -1,0 +1,193 @@
+﻿parameters:
+  agentPool: {}
+
+stages:
+####### TST ENVIRONMENT #######
+  - stage: MAIN_TST
+    displayName: "Main - TST Environment"
+    jobs:
+        - job: Plan
+          displayName: "Terraform Plan"
+          pool: ${{ parameters.agentPool }}
+          steps:
+            - task: TerraformInstaller@1
+              displayName: Install Terraform
+              inputs:
+                terraformVersion: 1.11.3
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform init
+              inputs:
+                command: init
+                backendType: azurerm
+                backendServiceArm: '$tst_service_connection'
+                backendAzureRmResourceGroupName: "tst-$projectInput-core-rg" ##Insert your created CORE resource group here
+                backendAzureRmStorageAccountName: "satst$projectInputcore" ##Insert your created CORE storage account here
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: '$projectInputtst.tfstate'
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform validate
+              inputs:
+                command: validate
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform plan
+              inputs:
+                command: plan
+                commandOptions: -var-file="./vars/tst.tfvars"
+                environmentServiceNameAzureRM: '$tst_service_connection'
+                backendServiceArm: '$tst_service_connection'
+                backendAzureRmResourceGroupName: "tst-$projectInput-core-rg" ##Insert your created CORE resource group here
+                backendAzureRmStorageAccountName: "satst$projectInputcore" ##Insert your created CORE storage account here
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: '$projectInputtst.tfstate'
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"              
+
+        - job: Approval
+          displayName: "Manual Approval"
+          dependsOn: Plan
+          pool: server
+          steps:
+            - task: ManualValidation@0
+              timeoutInMinutes: 10
+              inputs:
+                instructions: "Approve to proceed with Terraform Apply"
+
+        - job: Apply
+          displayName: "Terraform Apply"
+          pool: ${{ parameters.agentPool }}
+          dependsOn: Approval
+          steps:
+            - task: TerraformInstaller@1
+              displayName: Install Terraform
+              inputs:
+                terraformVersion: 1.11.3
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform init
+              inputs:
+                command: init
+                backendType: azurerm
+                backendServiceArm: '$tst_service_connection'
+                backendAzureRmResourceGroupName: "tst-$projectInput-core-rg" ##Insert your created CORE resource group here
+                backendAzureRmStorageAccountName: "satst$projectInputcore" ##Insert your created CORE storage account here
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: '$projectInputtst.tfstate'
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+                
+            - task: TerraformTaskV4@4
+              displayName: Terraform validate
+              inputs:
+                command: validate
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform Apply
+              inputs:
+                command: apply
+                commandOptions: --var-file "$(System.DefaultWorkingDirectory)/main/vars/tst.tfvars"
+                environmentServiceNameAzureRM: '$tst_service_connection'
+                backendServiceArm: '$tst_service_connection'
+                backendAzureRmResourceGroupName: "tst-$projectInput-core-rg" ##Insert your created CORE resource group here
+                backendAzureRmStorageAccountName: "satst$projectInputcore" ##Insert your created CORE storage account here
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: '$projectInputtst.tfstate'
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+
+####### PRD ENVIRONMENT #######
+  - stage: MAIN_PRD
+    displayName: "Main - PRD Environment"
+    jobs:
+        - job: Plan
+          displayName: "Terraform Plan"
+          pool: ${{ parameters.agentPool }}
+          steps:
+            - task: TerraformInstaller@1
+              displayName: Install Terraform
+              inputs:
+                terraformVersion: 1.11.3
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform init
+              inputs:
+                command: init
+                backendType: azurerm
+                backendServiceArm: '$prd_service_connection'
+                backendAzureRmResourceGroupName: "prd-$projectInput-core-rg" ##Insert your created CORE resource group here
+                backendAzureRmStorageAccountName: "saprd$projectInputcore" ##Insert your created CORE storage account here
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: '$projectInputprd.tfstate'
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform validate
+              inputs:
+                command: validate
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform plan
+              inputs:
+                command: plan
+                commandOptions: -var-file="./vars/prd.tfvars"
+                environmentServiceNameAzureRM: '$prd_service_connection'
+                backendServiceArm: '$prd_service_connection'
+                backendAzureRmResourceGroupName: "prd-$projectInput-core-rg" ##Insert your created CORE resource group here
+                backendAzureRmStorageAccountName: "saprd$projectInputcore" ##Insert your created CORE storage account here
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: '$projectInputprd.tfstate'
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"              
+
+        - job: Approval
+          displayName: "Manual Approval"
+          dependsOn: Plan
+          pool: server
+          steps:
+            - task: ManualValidation@0
+              timeoutInMinutes: 10
+              inputs:
+                instructions: "Approve to proceed with Terraform Apply"
+
+        - job: Apply
+          displayName: "Terraform Apply"
+          pool: ${{ parameters.agentPool }}
+          dependsOn: Approval
+          steps:
+            - task: TerraformInstaller@1
+              displayName: Install Terraform
+              inputs:
+                terraformVersion: 1.11.3
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform init
+              inputs:
+                command: init
+                backendType: azurerm
+                backendServiceArm: '$prd_service_connection'
+                backendAzureRmResourceGroupName: "prd-$projectInput-core-rg" ##Insert your created CORE resource group here
+                backendAzureRmStorageAccountName: "saprd$projectInputcore" ##Insert your created CORE storage account here
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: '$projectInputprd.tfstate'
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+                
+            - task: TerraformTaskV4@4
+              displayName: Terraform validate
+              inputs:
+                command: validate
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"
+
+            - task: TerraformTaskV4@4
+              displayName: Terraform Apply
+              inputs:
+                command: apply
+                commandOptions: --var-file "$(System.DefaultWorkingDirectory)/main/vars/prd.tfvars"
+                environmentServiceNameAzureRM: '$prd_service_connection'
+                backendServiceArm: '$prd_service_connection'
+                backendAzureRmResourceGroupName: "prd-$projectInput-core-rg" ##Insert your created CORE resource group here
+                backendAzureRmStorageAccountName: "saprd$projectInputcore" ##Insert your created CORE storage account here
+                backendAzureRmContainerName: 'tfstate'
+                backendAzureRmKey: '$projectInputprd.tfstate'
+                workingDirectory: "$(System.DefaultWorkingDirectory)/main"

@@ -1,0 +1,109 @@
+﻿parameters:
+  agentPool: {}
+
+stages:
+####### TST STAGE #######
+  - stage: TST_STAGE
+    displayName: "Core - TST Environment"
+    jobs:
+        - job: Plan
+          displayName: "Terraform Plan"
+          pool: ${{ parameters.agentPool }}
+          steps:
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: '1.11.3'
+            - task: AzureCLI@2
+              displayName: "Terraform Init & Plan"
+              inputs:
+                azureSubscription: '$tst_service_connection'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az account show  # Check if authentication is working
+                  cd "$(System.DefaultWorkingDirectory)\core"
+                  terraform init
+                  terraform plan --var-file "$(System.DefaultWorkingDirectory)/core/vars/tst.tfvars"                  
+
+        - job: Approval
+          displayName: "Manual Approval"
+          dependsOn: Plan
+          pool: server
+          steps:
+            - task: ManualValidation@0
+              timeoutInMinutes: 10
+              inputs:
+                instructions: "Approve to proceed with Terraform Apply"
+
+        - job: Apply
+          displayName: "Terraform Apply"
+          pool: ${{ parameters.agentPool }}
+          dependsOn: Approval
+          steps:
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: '1.11.3'
+            - task: AzureCLI@2
+              displayName: "Terraform Apply"
+              inputs:
+                azureSubscription: '$tst_service_connection'
+                scriptType: pscore
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az account show  # Check if authentication is working
+                  cd "$(System.DefaultWorkingDirectory)\core"
+                  terraform init
+                  terraform apply -auto-approve --var-file "$(System.DefaultWorkingDirectory)/core/vars/tst.tfvars"
+
+####### PRD ENVIRONMENT #######
+  - stage: PRD_STAGE
+    displayName: "Core - PRD Environment"
+    jobs:
+        - job: Plan
+          displayName: "Terraform Plan"
+          pool: ${{ parameters.agentPool }}
+          steps:
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: '1.11.3'
+            - task: AzureCLI@2
+              displayName: "Terraform Init & Plan"
+              inputs:
+                azureSubscription: '$prd_service_connection'
+                scriptType: 'pscore'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az account show  # Check if authentication is working
+                  cd "$(System.DefaultWorkingDirectory)\core"
+                  terraform init
+                  terraform plan --var-file "$(System.DefaultWorkingDirectory)/core/vars/prd.tfvars"                  
+
+        - job: Approval
+          displayName: "Manual Approval"
+          dependsOn: Plan
+          pool: server
+          steps:
+            - task: ManualValidation@0
+              timeoutInMinutes: 10
+              inputs:
+                instructions: "Approve to proceed with Terraform Apply"
+
+        - job: Apply
+          displayName: "Terraform Apply"
+          pool: ${{ parameters.agentPool }}
+          dependsOn: Approval
+          steps:
+            - task: TerraformInstaller@1
+              inputs:
+                terraformVersion: '1.11.3'
+            - task: AzureCLI@2
+              displayName: "Terraform Apply"
+              inputs:
+                azureSubscription: '$prd_service_connection'
+                scriptType: pscore
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az account show  # Check if authentication is working
+                  cd "$(System.DefaultWorkingDirectory)\core"
+                  terraform init
+                  terraform apply -auto-approve --var-file "$(System.DefaultWorkingDirectory)/core/vars/prd.tfvars"

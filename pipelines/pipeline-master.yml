@@ -1,0 +1,16 @@
+trigger: none
+
+stages:
+- template: pipeline-core.yml
+  parameters:
+    agentPool:
+      name: 'Default'
+      demands:
+        - agent.name -equals selfhosted
+
+- template: pipeline-main.yml
+  parameters:
+    agentPool:
+      name: 'Default'
+      demands:
+        - agent.name -equals selfhosted
