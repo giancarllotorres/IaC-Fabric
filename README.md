@@ -1,6 +1,6 @@
-# Azure Global AI Barcelona - Infrastructure as Code (IaC)
+# Microsoft Fabric IaC Deployment - Infrastructure as Code (IaC)
 
-This project contains Infrastructure as Code (IaC) assets used to deploy and manage both Azure resources and Microsoft Fabric objects for the **Azure Global AI Barcelona** initiative. The deployment process is fully automated using CI/CD pipelines defined via YAML, enabling repeatable, scalable, and consistent infrastructure provisioning.
+This project contains Infrastructure as Code (IaC) assets used to deploy and manage both Azure resources and Microsoft Fabric objects for the **Microsoft Fabric IaC Deployment** initiative. The deployment process is fully automated using CI/CD pipelines defined via YAML, enabling repeatable, scalable, and consistent infrastructure provisioning.
 
 ---
 
@@ -71,5 +71,6 @@ YAML files in this folder define the CI/CD pipelines that automate the entire in
 - All infrastructure changes must be tracked through version control.
 - Ensure environment variables and secrets are securely managed via pipeline settings or secret managers.
 - Review the CI/CD logs for errors or drift detection after deployment.
+
 
 ---
